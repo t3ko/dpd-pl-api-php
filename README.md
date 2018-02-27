@@ -1,18 +1,20 @@
 # dpd-pl-api-php
 Klient API w języku PHP do komunikacji z następującymi web-serwisami firmy kurierskiej DPD:
-- a (rejestrowanie przesyłek, drukowanie etykiet i protokołów przekazania przesyłek kurierowi, zamawianie kuriera po odbiór przesyłki)
+- `PackageService` (rejestrowanie przesyłek, drukowanie etykiet i protokołów przekazania przesyłek kurierowi, zamawianie kuriera po odbiór przesyłki)
+- `AppService` (obsługa zleceń odbioru przesyłek od osób trzecich)
 
 TODO:
-- b (obsługa zleceń odbioru przesyłek od osób trzecich)
-- c (tracking przesyłek)
+- `InfoService` (tracking przesyłek)
 
 ## Instalacja
 Najprostszy sposób to instalacja za pomocą Composer-a (http://getcomposer.org).
 
 Poprzez plik `composer.json`:
 ```json
-"require": {
-    "t3ko/dpd-pl-api-php": "^0"
+{
+    "require": {
+        "t3ko/dpd-pl-api-php": "^0"
+    }
 }
 ```
 lub z linii poleceń:
@@ -47,7 +49,7 @@ Aby poprawnie wysłać przesyłkę korzystając z API DPD należy przejść nast
 
 Poza powyższymi podstawowymi metodami obsługi paczek, poniższa biblioteka umożliwia także:
 
-* Zlecanie odbioru od osoby trzeciej (TODO)
+* Zlecanie odbioru od osoby trzeciej
 * Pobieranie listy puntów doręczenia (TODO)
 * Śledzenie przesyłek (TODO)
 
@@ -176,11 +178,12 @@ $parcel->getWaybill(); //numer listu przewozowego, np. 0000092494467Q
 ```
 
 ### 2. Pobranie etykiet
-TODO
+DOC TODO
 ### 3. Generowanie protokołu przekazania
-TODO
+DOC TODO
 ### 4. Sprawdzenie godzin dostępności kuriera
-TODO
+DOC TODO
 ### 5. Zamówienie kuriera po odbiór przesyłek
-TODO
+DOC TODO
 ### Zlecanie odbioru od osoby trzeciej
+DOC TODO

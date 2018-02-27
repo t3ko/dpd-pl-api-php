@@ -7,24 +7,29 @@ use Phpro\SoapClient\ClientFactory;
 use Phpro\SoapClient\Soap\ClassMap\ClassMap;
 use Phpro\SoapClient\Soap\ClassMap\ClassMapCollection;
 use Phpro\SoapClient\Soap\Handler\HttPlugHandle;
-use Symfony\Component\EventDispatcher\EventDispatcher;
+use Psr\Log\LoggerInterface;
+use T3ko\Dpd\Request\CollectionOrderRequest;
 use T3ko\Dpd\Request\FindPostalCodeRequest;
 use T3ko\Dpd\Request\GenerateLabelsRequest;
 use T3ko\Dpd\Request\GeneratePackageNumbersRequest;
 use T3ko\Dpd\Request\GenerateProtocolRequest;
 use T3ko\Dpd\Request\GetCourierAvailabilityRequest;
+use T3ko\Dpd\Response\CollectionOrderResponse;
 use T3ko\Dpd\Response\FindPostalCodeResponse;
 use T3ko\Dpd\Response\GenerateLabelsResponse;
 use T3ko\Dpd\Response\GeneratePackageNumbersResponse;
 use T3ko\Dpd\Response\GenerateProtocolResponse;
 use T3ko\Dpd\Response\GetCourierAvailabilityResponse;
-use T3ko\Dpd\Soap\Client\Client;
+use T3ko\Dpd\Soap\Client\AppServicesClient;
+use T3ko\Dpd\Soap\Client\PackageServicesClient;
 use T3ko\Dpd\Soap\Types\AuthDataV1;
 
 class Api
 {
-    const SANDBOX_WSDL_URL = 'https://dpdservicesdemo.dpd.com.pl/DPDPackageObjServicesService/DPDPackageObjServices?wsdl';
-    const PRODUCTION_WSDL_URL = 'https://dpdservices.dpd.com.pl/DPDPackageObjServicesService/DPDPackageObjServices?wsdl';
+    const PACKAGESERVICE_SANDBOX_WSDL_URL = 'http://dpdservicesdemo.dpd.com.pl/DPDPackageObjServicesService/DPDPackageObjServices?wsdl';
+    const PACKAGESERVICE_PRODUCTION_WSDL_URL = 'http://dpdservices.dpd.com.pl/DPDPackageObjServicesService/DPDPackageObjServices?wsdl';
+    const APPSERVICE_SANDBOX_WSDL_URL = 'http://dpdappservicesdemo.dpd.com.pl/DPDCRXmlServicesService/DPDCRXmlServices?wsdl';
+    const APPSERVICE_PRODUCTION_WSDL_URL = 'http://dpdappservices.dpd.com.pl/DPDCRXmlServicesService/DPDCRXmlServices?wsdl';
 
     /**
      * @var string
@@ -47,9 +52,19 @@ class Api
     private $sandboxMode = false;
 
     /**
-     * @var Client
+     * @var PackageServicesClient
      */
-    private $client;
+    private $packageServicesClient;
+
+    /**
+     * @var AppServicesClient
+     */
+    private $appServicesClient;
+
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
 
     /**
      * Api constructor.
@@ -130,37 +145,83 @@ class Api
     }
 
     /**
-     * @return string
+     * @param LoggerInterface $logger
      */
-    public function getWsdl()
+    public function setLogger(LoggerInterface $logger)
     {
-        if ($this->sandboxMode) {
-            return self::SANDBOX_WSDL_URL;
-        }
-
-        return self::PRODUCTION_WSDL_URL;
+        $this->logger = $logger;
     }
 
     /**
-     * @return Client
+     * @param string $clientClass
+     *
+     * @return string
      */
-    private function obtainClient()
+    private function getWsdl($clientClass)
     {
-        if ($this->client === null) {
-            $factory = new ClientFactory(Client::class);
-            $builder = new ClientBuilder(
-                $factory,
-                $this->getWsdl(),
-                [
-                    'cache_wsdl' => WSDL_CACHE_NONE,
-                ]
-            );
-            $builder->withEventDispatcher(new EventDispatcher());
-            $builder->withClassMaps($this->getClassMaps());
-            $this->client = $builder->build();
+        if ($this->sandboxMode) {
+            switch ($clientClass) {
+                case PackageServicesClient::class:
+                    return self::PACKAGESERVICE_SANDBOX_WSDL_URL;
+                case AppServicesClient::class:
+                    return self::APPSERVICE_SANDBOX_WSDL_URL;
+            }
         }
 
-        return $this->client;
+        switch ($clientClass) {
+            case PackageServicesClient::class:
+                return self::PACKAGESERVICE_PRODUCTION_WSDL_URL;
+            case AppServicesClient::class:
+                return self::APPSERVICE_PRODUCTION_WSDL_URL;
+        }
+    }
+
+    /**
+     * @return PackageServicesClient
+     */
+    private function obtainPackageServiceClient()
+    {
+        if ($this->packageServicesClient === null) {
+            $this->packageServicesClient = $this->obtainClient(PackageServicesClient::class);
+        }
+
+        return $this->packageServicesClient;
+    }
+
+    /**
+     * @return AppServicesClient
+     */
+    private function obtainAppServiceClient()
+    {
+        if ($this->appServicesClient === null) {
+            $this->appServicesClient = $this->obtainClient(AppServicesClient::class);
+        }
+
+        return $this->appServicesClient;
+    }
+
+    /**
+     * @param $clientClass
+     *
+     * @return \Phpro\SoapClient\ClientInterface
+     */
+    private function obtainClient($clientClass)
+    {
+        $factory = new ClientFactory($clientClass);
+        $builder = new ClientBuilder(
+            $factory,
+            $this->getWsdl($clientClass),
+            [
+                'cache_wsdl' => WSDL_CACHE_NONE,
+            ]
+        );
+        $builder->withHandler(HttPlugHandle::createWithDefaultClient());
+        $builder->withClassMaps($this->getClassMaps());
+        if ($this->logger instanceof LoggerInterface) {
+            $builder->withLogger($this->logger);
+        }
+
+        return $builder->build();
     }
 
     private function getClassMaps()
@@ -308,6 +369,8 @@ class Api
             new ClassMap('generateSpedLabelsV3Response', \T3ko\Dpd\Soap\Types\GenerateSpedLabelsV3Response::class),
             new ClassMap('generateSpedLabelsV2', \T3ko\Dpd\Soap\Types\GenerateSpedLabelsV2Request::class),
             new ClassMap('generateSpedLabelsV2Response', \T3ko\Dpd\Soap\Types\GenerateSpedLabelsV2Response::class),
+            new ClassMap('importPackagesXV1', \T3ko\Dpd\Soap\Types\ImportPackagesXV1Request::class),
+            new ClassMap('importPackagesXV1Response', \T3ko\Dpd\Soap\Types\ImportPackagesXV1Response::class),
         ]);
     }
 
@@ -330,7 +393,7 @@ class Api
     {
         $payload = $request->toPayload();
         $payload->setAuthData($this->getAuthDataStruct());
-        $response = $this->obtainClient()->findPostalCodeV1($payload);
+        $response = $this->obtainPackageServiceClient()->findPostalCodeV1($payload);
 
         return FindPostalCodeResponse::from($response);
     }
@@ -344,7 +407,7 @@ class Api
     {
         $payload = $request->toPayload();
         $payload->setAuthData($this->getAuthDataStruct());
-        $response = $this->obtainClient()->generatePackagesNumbersV4($payload);
+        $response = $this->obtainPackageServiceClient()->generatePackagesNumbersV4($payload);
 
         return GeneratePackageNumbersResponse::from($response);
     }
@@ -358,7 +421,7 @@ class Api
     {
         $payload = $request->toPayload();
         $payload->setAuthData($this->getAuthDataStruct());
-        $response = $this->obtainClient()->generateSpedLabelsV1($payload);
+        $response = $this->obtainPackageServiceClient()->generateSpedLabelsV1($payload);
 
         return GenerateLabelsResponse::from($response);
     }
@@ -372,7 +435,7 @@ class Api
     {
         $payload = $request->toPayload();
         $payload->setAuthData($this->getAuthDataStruct());
-        $response = $this->obtainClient()->generateProtocolV2($payload);
+        $response = $this->obtainPackageServiceClient()->generateProtocolV2($payload);
 
         return GenerateProtocolResponse::from($response);
     }
@@ -386,8 +449,22 @@ class Api
     {
         $payload = $request->toPayload();
         $payload->setAuthData($this->getAuthDataStruct());
-        $response = $this->obtainClient()->getCourierOrderAvailabilityV1($payload);
+        $response = $this->obtainPackageServiceClient()->getCourierOrderAvailabilityV1($payload);
 
         return GetCourierAvailabilityResponse::from($response);
+    }
+
+    /**
+     * @param CollectionOrderRequest $request
+     *
+     * @return CollectionOrderResponse
+     */
+    public function collectionOrder(CollectionOrderRequest $request): CollectionOrderResponse
+    {
+        $payload = $request->toPayload();
+        $payload->setAuthDataV1($this->getAuthDataStruct());
+        $response = $this->obtainAppServiceClient()->importPackagesXV1($payload);
+
+        return CollectionOrderResponse::from($response);
     }
 }

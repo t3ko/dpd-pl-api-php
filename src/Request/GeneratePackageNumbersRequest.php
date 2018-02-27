@@ -130,10 +130,10 @@ class GeneratePackageNumbersRequest
             $parcelObject->setContent($parcel->getContents());
             $parcelObject->setReference($parcel->getReference());
             [$customerData1, $customerData2, $customerData3] =
-                str_split((string)$parcel->getCustomerNotes(), 65);
-            $parcelObject->setCustomerData1(empty($customerData1) ? null : $customerData1);
-            $parcelObject->setCustomerData2(empty($customerData2) ? null : $customerData2);
-            $parcelObject->setCustomerData3(empty($customerData3) ? null : $customerData3);
+                str_split(str_pad((string)$parcel->getCustomerNotes(), 195, ' '), 65);
+            $parcelObject->setCustomerData1(empty(trim($customerData1)) ? null : trim($customerData1));
+            $parcelObject->setCustomerData2(empty(trim($customerData2)) ? null : trim($customerData2));
+            $parcelObject->setCustomerData3(empty(trim($customerData3)) ? null : trim($customerData3));
             $parcelObjects[] = $parcelObject;
         }
 

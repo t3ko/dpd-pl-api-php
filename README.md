@@ -1,18 +1,20 @@
 # dpd-pl-api-php
 Klient API w języku PHP do komunikacji z następującymi web-serwisami firmy kurierskiej DPD:
-- a (rejestrowanie przesyłek, drukowanie etykiet i protokołów przekazania przesyłek kurierowi, zamawianie kuriera po odbiór przesyłki)
+- `PackageService` (rejestrowanie przesyłek, drukowanie etykiet i protokołów przekazania przesyłek kurierowi, zamawianie kuriera po odbiór przesyłki)
+- `AppService` (obsługa zleceń odbioru przesyłek od osób trzecich)
 
 TODO:
-- b (obsługa zleceń odbioru przesyłek od osób trzecich)
-- c (tracking przesyłek)
+- `InfoService` (tracking przesyłek)
 
 ## Instalacja
 Najprostszy sposób to instalacja za pomocą Composer-a (http://getcomposer.org).
 
 Poprzez plik `composer.json`:
 ```json
-"require": {
-    "t3ko/dpd-pl-api-php": "^0"
+{
+    "require": {
+        "t3ko/dpd-pl-api-php": "^0"
+    }
 }
 ```
 lub z linii poleceń:
@@ -47,7 +49,7 @@ Aby poprawnie wysłać przesyłkę korzystając z API DPD należy przejść nast
 
 Poza powyższymi podstawowymi metodami obsługi paczek, poniższa biblioteka umożliwia także:
 
-* Zlecanie odbioru od osoby trzeciej (TODO)
+* Zlecanie odbioru od osoby trzeciej
 * Pobieranie listy puntów doręczenia (TODO)
 * Śledzenie przesyłek (TODO)
 
@@ -176,11 +178,77 @@ $parcel->getWaybill(); //numer listu przewozowego, np. 0000092494467Q
 ```
 
 ### 2. Pobranie etykiet
-TODO
+DOC TODO
 ### 3. Generowanie protokołu przekazania
-TODO
+DOC TODO
 ### 4. Sprawdzenie godzin dostępności kuriera
-TODO
+DOC TODO
 ### 5. Zamówienie kuriera po odbiór przesyłek
-TODO
-### Zlecanie odbioru od osoby trzeciej
+DOC TODO
+### 6. Zlecanie odbioru od osoby trzeciej
+Korzystając z API `AppService` można wystawić żądanie odebrania przesyłki od osoby trzeciej. 
+W tym celu należy utworzyć obiekt (lub obiekty) typu `Package` opisujące konfigurację przesyłki jak przy zwykłym nadawaniu,
+pamiętając, że w polu `$sender` powinny znajdować się dane podmiotu faktycznie wydającego paczkę kurierowi, a nie zlecającego odbiór!
+
+Poza tym, endpoint do zlecania odbioru akceptuje jedynie obiekty `Package`, w których zadeklarowano płatność przez stronę trzecią 
+(rozumianą jako stronę zlecającą odbiór):
+```php
+$package->setPayerType(\T3ko\Dpd\Objects\Enum\PayerType::THIRD_PARTY());
+```
+oraz podano numer FID tego płatnika (czyli w praktyce ten sam, którego używamy do łączenia się z API):
+```php
+$package->setThirdPartyFid(123);
+```
+
+#### CollectionOrderRequest
+Tak skonstruowany `Package` służy jako parametr do generowania obiektu `CollectionOrderRequest`:
+```php
+use \T3ko\Dpd\Request\CollectionOrderRequest;
+
+$singlePackageRequest = CollectionOrderRequest::fromPackage($package);
+$multiplePackagesRequest = CollectionOrderRequest::fromPackages([$package1, $package2]);
+```
+
+dzięki któremu możemy wywołać metodę API zlecającą odbiór - `collectionOrder()`:
+```php
+use \T3ko\Dpd\Request\CollectionOrderRequest;
+
+/** @var CollectionOrderRequest $request */
+$response = $api->collectionOrder($request);
+```
+
+#### CollectionOrderResponse
+W odpowiedzi uzyskujemy obiekt typu `CollectionOrdersResponse`:
+```php
+/** @var CollectionOrderResponse $response */
+$response = $api->collectionOrder($request);
+```
+zawierający listę informację o przesyłkach, które udało się zlecić, w postaci tablicy obiektów typu `CollectionOrderedPackage`:
+```php
+/** @var CollectionOrderedPackage[] $packages */
+$packages = $response->getCollectionOrderedPackages();
+
+list($package) = $packages;
+
+$package->getPackageId();   //identyfikator przesyłki nadany przez DPD
+$package->getReference();   //ewentualna referencja klienta nadana wiążąca paczkę z obiektem Package przesłanym w requeście
+$package->getParcels();     //tablica obiektów typu CollectionOrderedParcel opisujących zlecona paczki tej przeysyłki
+$package->getStatusInfo();  //status tego requestu
+$package->getOrderNumber(); //numer zlecenia w systemie DPD
+```
+
+Natomiast w obiektach `CollectionOrderedParcel` pobranych z `$package->getParcels()` zapisany jest identyfikator paczki
+nadawany przez DPD oraz numer listu przewozowego dla tej paczki:
+
+```php
+list($parcel) = $package->getParcels();
+
+$parcel->getParcelId(); //identyfikator paczki nadany przez DPD
+$parcel->getWaybill();  //numer listu przewozowego dla tej paczki
+```
+
+Składanie zlecenia odbioru przesyłki od osoby trzeciej w tym miejscu się kończy. Nie ma potrzeby drukowania etykiet i przekazywania
+ich nadającemu lub zamawiania kuriera - to zadzieje się automatycznie po stronie DPD.
+
+
+

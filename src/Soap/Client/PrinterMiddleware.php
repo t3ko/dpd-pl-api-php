@@ -6,18 +6,17 @@ use Http\Promise\Promise;
 use Phpro\SoapClient\Middleware\Middleware;
 use Psr\Http\Message\RequestInterface;
 
-class Printer extends Middleware
+class PrinterMiddleware extends Middleware
 {
     public function getName(): string
     {
-        return 'printer';
+        return 'printer_middleware';
     }
 
     public function beforeRequest(callable $next, RequestInterface $request): Promise
     {
-        //echo "********\n\n\n";
         echo $request->getBody();
-
         return $next($request);
     }
+
 }

@@ -2,7 +2,7 @@
 
 namespace T3ko\Dpd\Soap\Client;
 
-class Client extends \Phpro\SoapClient\Client
+class PackageServicesClient extends \Phpro\SoapClient\Client
 {
     //    public function appendParcelsToPackageV1(\T3ko\Dpd\Soap\Types\AppendParcelsToPackageV1Request $appendParcelsToPackageV1) : \T3ko\Dpd\Soap\Types\appendParcelsToPackageV1Response
 //    {

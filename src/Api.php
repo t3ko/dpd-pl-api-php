@@ -14,13 +14,16 @@ use T3ko\Dpd\Request\GenerateLabelsRequest;
 use T3ko\Dpd\Request\GeneratePackageNumbersRequest;
 use T3ko\Dpd\Request\GenerateProtocolRequest;
 use T3ko\Dpd\Request\GetCourierAvailabilityRequest;
+use T3ko\Dpd\Request\GetParcelTrackingRequest;
 use T3ko\Dpd\Response\CollectionOrderResponse;
 use T3ko\Dpd\Response\FindPostalCodeResponse;
 use T3ko\Dpd\Response\GenerateLabelsResponse;
 use T3ko\Dpd\Response\GeneratePackageNumbersResponse;
 use T3ko\Dpd\Response\GenerateProtocolResponse;
 use T3ko\Dpd\Response\GetCourierAvailabilityResponse;
+use T3ko\Dpd\Response\GetParcelTrackingResponse;
 use T3ko\Dpd\Soap\Client\AppServicesClient;
+use T3ko\Dpd\Soap\Client\InfoServicesClient;
 use T3ko\Dpd\Soap\Client\PackageServicesClient;
 use T3ko\Dpd\Soap\Types\AuthDataV1;
 
@@ -30,6 +33,8 @@ class Api
     const PACKAGESERVICE_PRODUCTION_WSDL_URL = 'http://dpdservices.dpd.com.pl/DPDPackageObjServicesService/DPDPackageObjServices?wsdl';
     const APPSERVICE_SANDBOX_WSDL_URL = 'http://dpdappservicesdemo.dpd.com.pl/DPDCRXmlServicesService/DPDCRXmlServices?wsdl';
     const APPSERVICE_PRODUCTION_WSDL_URL = 'http://dpdappservices.dpd.com.pl/DPDCRXmlServicesService/DPDCRXmlServices?wsdl';
+    const INFOSERVICE_SANDBOX_WSDL_URL = null;
+    const INFOSERVICE_PRODUCTION_WSDL_URL = 'https://dpdinfoservices.dpd.com.pl/DPDInfoServicesObjEventsService/DPDInfoServicesObjEvents?wsdl';
 
     /**
      * @var string
@@ -60,6 +65,11 @@ class Api
      * @var AppServicesClient
      */
     private $appServicesClient;
+
+    /**
+     * @var InfoServicesClient
+     */
+    private $infoServicesClient;
 
     /**
      * @var LoggerInterface
@@ -165,6 +175,9 @@ class Api
                     return self::PACKAGESERVICE_SANDBOX_WSDL_URL;
                 case AppServicesClient::class:
                     return self::APPSERVICE_SANDBOX_WSDL_URL;
+                case InfoServicesClient::class:
+                    //InfoServices endpoint has no sandbox mode - using production instead
+                    return self::INFOSERVICE_PRODUCTION_WSDL_URL;
             }
         }
 
@@ -173,6 +186,8 @@ class Api
                 return self::PACKAGESERVICE_PRODUCTION_WSDL_URL;
             case AppServicesClient::class:
                 return self::APPSERVICE_PRODUCTION_WSDL_URL;
+            case InfoServicesClient::class:
+                return self::INFOSERVICE_PRODUCTION_WSDL_URL;
         }
     }
 
@@ -198,6 +213,18 @@ class Api
         }
 
         return $this->appServicesClient;
+    }
+
+    /**
+     * @return InfoServicesClient
+     */
+    private function obtainInfoServiceClient()
+    {
+        if ($this->infoServicesClient === null) {
+            $this->infoServicesClient = $this->obtainClient(InfoServicesClient::class);
+        }
+
+        return $this->infoServicesClient;
     }
 
     /**
@@ -371,6 +398,25 @@ class Api
             new ClassMap('generateSpedLabelsV2Response', \T3ko\Dpd\Soap\Types\GenerateSpedLabelsV2Response::class),
             new ClassMap('importPackagesXV1', \T3ko\Dpd\Soap\Types\ImportPackagesXV1Request::class),
             new ClassMap('importPackagesXV1Response', \T3ko\Dpd\Soap\Types\ImportPackagesXV1Response::class),
+            new ClassMap('getEventsForCustomerV4', \T3ko\Dpd\Soap\Types\GetEventsForCustomerV4Request::class),
+            new ClassMap('getEventsForCustomerV4Response', \T3ko\Dpd\Soap\Types\GetEventsForCustomerV4Response::class),
+            new ClassMap('customerEventsResponseV2', \T3ko\Dpd\Soap\Types\CustomerEventsResponseV2::class),
+            new ClassMap('customerEventV2', \T3ko\Dpd\Soap\Types\CustomerEventV2::class),
+            new ClassMap('customerEventDataV2', \T3ko\Dpd\Soap\Types\CustomerEventDataV2::class),
+            new ClassMap('getEventsForCustomerV3', \T3ko\Dpd\Soap\Types\GetEventsForCustomerV3Request::class),
+            new ClassMap('getEventsForCustomerV3Response', \T3ko\Dpd\Soap\Types\GetEventsForCustomerV3Response::class),
+            new ClassMap('getEventsForCustomerV2', \T3ko\Dpd\Soap\Types\GetEventsForCustomerV2Request::class),
+            new ClassMap('getEventsForCustomerV2Response', \T3ko\Dpd\Soap\Types\GetEventsForCustomerV2Response::class),
+            new ClassMap('customerEventsResponseV1', \T3ko\Dpd\Soap\Types\CustomerEventsResponseV1::class),
+            new ClassMap('customerEventV1', \T3ko\Dpd\Soap\Types\CustomerEventV1::class),
+            new ClassMap('getEventsForCustomerV1', \T3ko\Dpd\Soap\Types\GetEventsForCustomerV1Request::class),
+            new ClassMap('getEventsForCustomerV1Response', \T3ko\Dpd\Soap\Types\GetEventsForCustomerV1Response::class),
+            new ClassMap('getEventsForWaybillV1', \T3ko\Dpd\Soap\Types\GetEventsForWaybillV1Request::class),
+            new ClassMap('getEventsForWaybillV1Response', \T3ko\Dpd\Soap\Types\GetEventsForWaybillV1Response::class),
+            new ClassMap('customerEventsResponseV3', \T3ko\Dpd\Soap\Types\CustomerEventsResponseV3::class),
+            new ClassMap('customerEventV3', \T3ko\Dpd\Soap\Types\CustomerEventV3::class),
+            new ClassMap('customerEventDataV3', \T3ko\Dpd\Soap\Types\CustomerEventDataV3::class),
+            new ClassMap('markEventsAsProcessedV1Response', \T3ko\Dpd\Soap\Types\MarkEventsAsProcessedV1Response::class),
         ]);
     }
 
@@ -466,5 +512,19 @@ class Api
         $response = $this->obtainAppServiceClient()->importPackagesXV1($payload);
 
         return CollectionOrderResponse::from($response);
+    }
+
+    /**
+     * @param GetParcelTrackingRequest $request
+     *
+     * @return GetParcelTrackingResponse
+     */
+    public function getParcelTracking(GetParcelTrackingRequest $request): GetParcelTrackingResponse
+    {
+        $payload = $request->toPayload();
+        $payload->setAuthData($this->getAuthDataStruct());
+        $response = $this->obtainInfoServiceClient()->getEventsForWaybillV1($payload);
+
+        return GetParcelTrackingResponse::from($response);
     }
 }

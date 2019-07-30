@@ -11,7 +11,7 @@ class CustomerEventsResponseV3
     private $confirmId;
 
     /**
-     * @var CustomerEventV3[]
+     * @var CustomerEventV3[]|null
      */
     private $eventsList;
 
@@ -26,7 +26,7 @@ class CustomerEventsResponseV3
     /**
      * @return CustomerEventV3[]
      */
-    public function getEventsList() : array
+    public function getEventsList() : ?array
     {
         return $this->eventsList;
     }

@@ -22,6 +22,24 @@ lub z linii poleceń:
 composer require t3ko/dpd-pl-api-php
 ```
 
+Biblioteka korzysta z `httplug` jako abstrakcji klienta HTTP i nie zawiera żadnej domyślnej implementacji. 
+Po stronie projektu, w którym jest umieszczona - leży obowiązek dostarczenia klienta HTTP zgodnego z PSR-18.
+Więcej informacji tutaj: http://docs.php-http.org/en/latest/httplug/users.html
+
+Jeśli Twój projekt zawiera już jakiegoś klienta HTTP wspieranego przez `httplug` (http://docs.php-http.org/en/latest/clients.html) wystarczy razem z biblioteką doinstalować odpowiedni adapter.
+
+Np. dla `curl`:
+```bash
+composer require php-http/curl-client:^1 t3ko/dpd-pl-api-php
+```
+
+Jeśli natomiast nie używasz jeszcze żadnego kompatybilnego klienta HTTP w swoim kodzie, będzie konieczne zainstalowanie go razem z adapterem.
+
+Np. `guzzle`:
+```bash
+composer require php-http/guzzle6-adapter:^1 guzzlehttp/guzzle:~6.0 t3ko/dpd-pl-api-php
+```
+
 ## Użycie
 ### Sposób korzystania 
 Aby poprawnie wysłać przesyłkę korzystając z API DPD należy przejść następujące, omówione szerzej w dalszej części,  kroki:

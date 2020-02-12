@@ -2,8 +2,6 @@
 Klient API w języku PHP do komunikacji z następującymi web-serwisami firmy kurierskiej DPD:
 - `PackageService` (rejestrowanie przesyłek, drukowanie etykiet i protokołów przekazania przesyłek kurierowi, zamawianie kuriera po odbiór przesyłki)
 - `AppService` (obsługa zleceń odbioru przesyłek od osób trzecich)
-
-TODO:
 - `InfoService` (tracking przesyłek)
 
 ## Instalacja
@@ -69,7 +67,7 @@ Poza powyższymi podstawowymi metodami obsługi paczek, poniższa biblioteka umo
 
 * Zlecanie odbioru od osoby trzeciej
 * Pobieranie listy puntów doręczenia (TODO)
-* Śledzenie przesyłek (TODO)
+* Śledzenie przesyłek
 
 ### 0. Połączenie z API
 Aby rozpocząć korzystanie z API wymagane są dane autentykacyjne składające się z trzech parametrów:
@@ -290,7 +288,7 @@ DOC TODO
 ### 5. Zamówienie kuriera po odbiór przesyłek
 DOC TODO
 
-### 6. Zlecanie odbioru od osoby trzeciej
+### Zlecanie odbioru od osoby trzeciej
 Korzystając z API `AppService` można wystawić żądanie odebrania przesyłki od osoby trzeciej. 
 W tym celu należy utworzyć obiekt (lub obiekty) typu `Package` opisujące konfigurację przesyłki jak przy zwykłym nadawaniu,
 pamiętając, że w polu `$sender` powinny znajdować się dane podmiotu faktycznie wydającego paczkę kurierowi, a nie zlecającego odbiór!
@@ -352,8 +350,82 @@ $parcel->getParcelId(); //identyfikator paczki nadany przez DPD
 $parcel->getWaybill();  //numer listu przewozowego dla tej paczki
 ```
 
-Składanie zlecenia odbioru przesyłki od osoby trzeciej w tym miejscu się kończy. Nie ma potrzeby drukowania etykiet i przekazywania
-ich nadającemu lub zamawiania kuriera - to zadzieje się automatycznie po stronie DPD.
+Składanie zlecenia odbioru przesyłki od osoby trzeciej w tym miejscu się kończy. Nie ma potrzeby drukowania etykiet i przekazywania ich nadającemu lub zamawiania kuriera - to zadzieje się automatycznie po stronie DPD.
 
+### Śledzenie przesyłek
 
+Aby uzyskać informacje na temat konkretnej przesyłki możemy wykorzystać API `InfoService` poprzez metodę `getParcelTracking`:
 
+```php
+use \T3ko\Dpd\Request\GetParcelTrackingRequest;
+
+/** @var GetParcelTrackingRequest $request */
+$response = $api->getParcelTracking($request);
+```
+
+### GetParcelTrackingRequest
+Obiekt żądania przekazywany do tej metody tworzymy przekazując numer listu przewozowego:
+```php
+use \T3ko\Dpd\Request\GetParcelTrackingRequest;
+
+$request = GetParcelTrackingRequest::fromWaybill(...);
+```
+Opcjonalnie możemy wskazać czy chodzi nam o podgląd pełnej historii paczki czy tylko ostatnie zarejestrowane zdarzenie jej dotyczące:
+```php
+use \T3ko\Dpd\Request\GetParcelTrackingRequest;
+use T3ko\Dpd\Objects\Enum\TrackingEventsCount;
+
+$request = GetParcelTrackingRequest::fromWaybill('01234567890U', TrackingEventsCount::ALL()); 
+$request = GetParcelTrackingRequest::fromWaybill('01234567890U', TrackingEventsCount::ONLY_LAST());
+```
+przy czym domyślną wartością jest `TrackingEventsCount::ALL()` czyli pobieranie wszystkich zdarzeń w historii paczki.
+
+### GetParcelTrackingResponse
+W odpowiedzi uzyskujemy obiekt typu `GetParcelTrackingResponse`
+```php
+use \T3ko\Dpd\Response\GetParcelTrackingResponse;
+
+/** @var GetParcelTrackingResponse $response */
+$response = $api->getParcelTracking($request);
+```
+dający poprzez metodę `getEvents()` do tablicy obiektów typu `ParcelEvent` wyrażających pojedyncze zdarzenie w historii przesyłki:
+```php
+/** @var GetParcelTrackingResponse $response */
+$response = $api->getParcelTracking($request);
+foreach ($response->getEvents() as $event) {
+    printf("%s - %s - %s - %s - %s (%s %s) (%s) %s",
+        $event->getEventTime()->format(DATE_ATOM),  //data zdarzenia
+        $event->getWaybill(),                       //numer listu przewozowego
+        $event->getPackageReference(),              //dowolne dane powiązane z przesyłką podane przez wysyłającego
+        $event->getParcelReference(),               //j.w. związane z pojedynczą paczką
+        $event->getCountry(),                       //kod kraju operacji
+        $event->getDepot(),                         //numer oddziału DPD 
+        $event->getDepotName(),                     //nazwa oddziału DPD
+        $event->getBusinessCode(),                  //kod zdarzenia
+        $event->getDescription()                    //opis słowny zdarzenia
+    );
+    $eventAdditionalData = [];
+    if (!empty($event->getAdditionalData())) {      //dodatkowe dane zdarzenia
+        foreach ($event->getAdditionalData() as $additionalData) {
+            $eventAdditionalData[] = $additionalData->getValue();
+        }
+    }
+    if (!empty($eventAdditionalData)) {
+        printf(' [%s]', implode(', ', $eventAdditionalData));
+    }
+    echo "\n";
+}
+```
+Przykładowy efekt powyższego wywołania możemy zobaczyć poniżej
+```
+2020-08-26T09:05:18+00:00 - 0123456789012A -  -  - PL (1349 Warszawa3) (190101) Przesyłka doręczona  [Kowalski]
+2020-08-26T07:02:15+00:00 - 0123456789012A -  -  - PL (1349 Warszawa3) (170304) Wysłano powiadomienie
+2020-08-26T07:01:46+00:00 - 0123456789012A -  -  - PL (1305 Warszawa) (170309) Powiadomienie SMS [+48000000000, DELIVERED]
+2020-08-26T06:38:21+00:00 - 0123456789012A -  -  - PL (1305 Warszawa) (170310) Powiadomienie mail [xxx@xxx.pl, SENT]
+2020-08-26T06:19:49+00:00 - 0123456789012A -  -  - PL (1349 Warszawa3) (170102) Wydanie przesyłki do doręczenia [LOK9999WAC]
+2020-08-26T00:44:23+00:00 - 0123456789012A -  -  - PL (1349 Warszawa3) (330137) Przyjęcie przesyłki w oddziale DPD  [LOK0002WAC]
+2020-08-25T16:16:14+00:00 - 0123456789012A -  -  - PL (1320 Piotrków Tryb.) (330135) Przyjęcie przesyłki w oddziale DPD  [LOK0033PTR]
+2020-08-25T14:46:29+00:00 - 0123456789012A -  -  - PL (1320 Piotrków Tryb.) (040101) Przesyłka odebrana przez Kuriera
+2020-08-24T15:05:48+00:00 - 0123456789012A -  -  -  ( ) (030103) Zarejestrowano dane przesyłki, przesyłka jeszcze nie nadana
+```
+ 

@@ -196,9 +196,94 @@ $parcel->getWaybill(); //numer listu przewozowego, np. 0000092494467Q
 ```
 
 ### 2. Pobranie etykiet
-DOC TODO
+"Wydruk" etykiet odbywa się przy użyciu metody `generateLabels` do której przekazujemy obiekt typu `GenerateLabelsRequest`:
+
+```php
+use \T3ko\Dpd\Request\GenerateLabelsRequest;
+
+/** @var GenerateLabelsRequest $request */
+$response = $api->generateLabels($request);
+```
+
+#### GeneratePackageNumbersRequest
+Obiekt żądania można skonstruować na trzy sposoby:
+
+- przy użyciu numerów listów przewozowych wygenerowanych w kroku 1.:
+```php
+use \T3ko\Dpd\Request\GeneratePackageNumbersRequest;
+
+$request = GenerateLabelsRequest::fromWaybills(['0000092494467Q']);
+```
+- przy użyciu numerów identyfikatorów paczek nadanych przez DPD w kroku 1.:
+```php
+use \T3ko\Dpd\Request\GeneratePackageNumbersRequest;
+
+$parcelId = $parcel->getId();
+$request = GenerateLabelsRequest::fromParcelIds([$parcelId]);
+```
+- lub, korzystając z pola `reference` paczek
+```php
+use \T3ko\Dpd\Request\GeneratePackageNumbersRequest;
+
+$parcelRef = $parcel->getReference();
+$request = GenerateLabelsRequest::fromReferences([$parcelRef]);
+```
+(oczywiście tutaj trzeba pamiętać że pole `reference` to dowolny string który chcemy powiązać z paczką -
+np. numer zamówienia do wysyłki itp. - wobec czego jeśli nie przekażemy żadnej wartości tego pola w kroku 1. gdy rejestrujemy
+paczki nie będzie można z niego skorzystać)
+
+#### GeneratePackageNumbersResponse
+Po skonstruowaniu żadanią i wysłaniu go do API metodą `generateLabels` uzyskamy w odpowiedzi obiekt typu
+`GenerateLabelsResponse`:
+
+```php
+/** @var GenerateLabelsResponse $response */
+$response = $api->generateLabels($request);
+```
+Wewnątrz mamy dostęp do pola `fileContent` zawierającego dane binarne pliku PDF z etykietą/etykietami.
+W przykładzie poniżej przedstawiono zapis etykiety do pliku `etykieta.pdf`:
+
+
+```php
+$response = $api->generateLabels($request);
+
+$fp = fopen('etykieta.pdf', 'wb');
+fwrite($fp, $response->getFileContent());
+fclose($fp)
+```
+
 ### 3. Generowanie protokołu przekazania
-DOC TODO
+
+Aby wygenerować protokół przekazania paczek kurierowi, używamy metody `generateProtocol`:
+
+```php
+use \T3ko\Dpd\Request\GenerateProtocolRequest;
+
+/** @var GenerateProtocolRequest $request */
+$response = $api->generateProtocol($request);
+```
+###GenerateProtocolRequest
+Tworzenie obiektu żądania jest bliźniaczo podobne do przypadku generowania etykiet. Tutaj też możemy stworzyć obiekt na trzy sposoby,
+korzystając z numerów listów przewozowych, identyfiaktorów paczek lub referencji paczek:
+
+```php
+use \T3ko\Dpd\Request\GenerateProtocolRequest;
+
+$request = GenerateProtocolRequest::fromWaybils([...]);
+$request = GenerateProtocolRequest::fromParcelIds([...]);
+$request = GenerateProtocolRequest::fromReferences([...]);
+```
+
+###GenerateProtocolResponse
+Wysłanie tak skonstruowanego żądania do API da nam w odpowiedzi obiekt typu `GenerateProtocolResponse`, w którym do 
+dyspozycji - znów - jest pole `fileContent` zawierąjce treść pliku PDF:
+
+```php
+$response = $api->generateProtocol($request);
+
+$response->getFileContent()); //treść pliku PDF z protokołem przekazania
+```
+
 ### 4. Sprawdzenie godzin dostępności kuriera
 DOC TODO
 ### 5. Zamówienie kuriera po odbiór przesyłek

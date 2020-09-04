@@ -205,35 +205,35 @@ use \T3ko\Dpd\Request\GenerateLabelsRequest;
 $response = $api->generateLabels($request);
 ```
 
-#### GeneratePackageNumbersRequest
+#### GenerateLabelsRequest
 Obiekt żądania można skonstruować na trzy sposoby:
 
 - przy użyciu numerów listów przewozowych wygenerowanych w kroku 1.:
 ```php
-use \T3ko\Dpd\Request\GeneratePackageNumbersRequest;
+use \T3ko\Dpd\Request\GenerateLabelsRequest;
 
 $request = GenerateLabelsRequest::fromWaybills(['0000092494467Q']);
 ```
 - przy użyciu numerów identyfikatorów paczek nadanych przez DPD w kroku 1.:
 ```php
-use \T3ko\Dpd\Request\GeneratePackageNumbersRequest;
+use \T3ko\Dpd\Request\GenerateLabelsRequest;
 
 $parcelId = $parcel->getId();
 $request = GenerateLabelsRequest::fromParcelIds([$parcelId]);
 ```
 - lub, korzystając z pola `reference` paczek
 ```php
-use \T3ko\Dpd\Request\GeneratePackageNumbersRequest;
+use \T3ko\Dpd\Request\GenerateLabelsRequest;
 
 $parcelRef = $parcel->getReference();
 $request = GenerateLabelsRequest::fromReferences([$parcelRef]);
 ```
 (oczywiście tutaj trzeba pamiętać że pole `reference` to dowolny string który chcemy powiązać z paczką -
 np. numer zamówienia do wysyłki itp. - wobec czego jeśli nie przekażemy żadnej wartości tego pola w kroku 1. gdy rejestrujemy
-paczki nie będzie można z niego skorzystać)
+paczki - nie będzie można z niego skorzystać)
 
-#### GeneratePackageNumbersResponse
-Po skonstruowaniu żadanią i wysłaniu go do API metodą `generateLabels` uzyskamy w odpowiedzi obiekt typu
+#### GenerateLabelsResponse
+Po skonstruowaniu żadania i wysłaniu go do API metodą `generateLabels` uzyskamy w odpowiedzi obiekt typu
 `GenerateLabelsResponse`:
 
 ```php
@@ -242,7 +242,6 @@ $response = $api->generateLabels($request);
 ```
 Wewnątrz mamy dostęp do pola `fileContent` zawierającego dane binarne pliku PDF z etykietą/etykietami.
 W przykładzie poniżej przedstawiono zapis etykiety do pliku `etykieta.pdf`:
-
 
 ```php
 $response = $api->generateLabels($request);
@@ -262,9 +261,9 @@ use \T3ko\Dpd\Request\GenerateProtocolRequest;
 /** @var GenerateProtocolRequest $request */
 $response = $api->generateProtocol($request);
 ```
-###GenerateProtocolRequest
+### GenerateProtocolRequest
 Tworzenie obiektu żądania jest bliźniaczo podobne do przypadku generowania etykiet. Tutaj też możemy stworzyć obiekt na trzy sposoby,
-korzystając z numerów listów przewozowych, identyfiaktorów paczek lub referencji paczek:
+korzystając z numerów listów przewozowych, identyfikatorów paczek lub referencji paczek:
 
 ```php
 use \T3ko\Dpd\Request\GenerateProtocolRequest;
@@ -274,11 +273,12 @@ $request = GenerateProtocolRequest::fromParcelIds([...]);
 $request = GenerateProtocolRequest::fromReferences([...]);
 ```
 
-###GenerateProtocolResponse
+### GenerateProtocolResponse
 Wysłanie tak skonstruowanego żądania do API da nam w odpowiedzi obiekt typu `GenerateProtocolResponse`, w którym do 
-dyspozycji - znów - jest pole `fileContent` zawierąjce treść pliku PDF:
+dyspozycji - znów - jest pole `fileContent` zawierające treść pliku PDF:
 
 ```php
+/** @var GenerateLabelsResponse $response */
 $response = $api->generateProtocol($request);
 
 $response->getFileContent()); //treść pliku PDF z protokołem przekazania
@@ -286,8 +286,10 @@ $response->getFileContent()); //treść pliku PDF z protokołem przekazania
 
 ### 4. Sprawdzenie godzin dostępności kuriera
 DOC TODO
+
 ### 5. Zamówienie kuriera po odbiór przesyłek
 DOC TODO
+
 ### 6. Zlecanie odbioru od osoby trzeciej
 Korzystając z API `AppService` można wystawić żądanie odebrania przesyłki od osoby trzeciej. 
 W tym celu należy utworzyć obiekt (lub obiekty) typu `Package` opisujące konfigurację przesyłki jak przy zwykłym nadawaniu,

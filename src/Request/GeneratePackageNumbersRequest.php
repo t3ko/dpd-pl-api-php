@@ -35,6 +35,7 @@ use T3ko\Dpd\Soap\Types\ServiceSelfColReceiverTypeEnumOpenUMLFeV1;
 use T3ko\Dpd\Soap\Types\ServicesOpenUMLFeV4;
 use T3ko\Dpd\Soap\Types\ServiceTiresExportOpenUMLFeV1;
 use T3ko\Dpd\Soap\Types\ServiceTiresOpenUMLFeV1;
+use T3ko\Dpd\StringHelper\StringHelper;
 
 class GeneratePackageNumbersRequest
 {
@@ -130,7 +131,7 @@ class GeneratePackageNumbersRequest
             $parcelObject->setContent($parcel->getContents());
             $parcelObject->setReference($parcel->getReference());
             [$customerData1, $customerData2, $customerData3] =
-                mb_split(str_pad((string)$parcel->getCustomerNotes(), 195, ' '), 65);
+                StringHelper::mb_str_split(str_pad((string)$parcel->getCustomerNotes(), 195, ' '), 65);
             $parcelObject->setCustomerData1(empty(trim($customerData1)) ? null : trim($customerData1));
             $parcelObject->setCustomerData2(empty(trim($customerData2)) ? null : trim($customerData2));
             $parcelObject->setCustomerData3(empty(trim($customerData3)) ? null : trim($customerData3));

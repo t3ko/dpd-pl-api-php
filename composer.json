@@ -10,19 +10,20 @@
     }
   ],
   "require": {
-    "phpro/soap-client": "0.6.0",
+    "phpro/soap-client": "^1.0",
     "sabre/xml": "^2.1",
     "psr/http-client": "^1.0",
-    "psr/http-client-implementation": "*",
-    "php-http/message-factory": "^1.0"
+    "psr/http-client-implementation": "^1.0",
+    "php-http/message-factory": "^1.0",
+    "psr/http-message": "^1.0",
+    "php-http/httplug": "^2.1",
+    "php-http/discovery": "^1.7",
+    "php-http/message": "^1.8",
+    "php-http/client-common": "^2.1"
   },
   "require-dev": {
-    "php-http/message": "^1.6",
-    "php-http/mock-client": "^1.0",
     "guzzlehttp/psr7": "^1.4",
     "php-http/guzzle6-adapter": "^2",
-    "phpspec/phpspec": "~3.2",
-    "phpspec/prophecy": "~1.6",
     "phpunit/phpunit": "~7.0",
     "thomasweinert/phpunit-xpath-assertions": "^2.0"
   },

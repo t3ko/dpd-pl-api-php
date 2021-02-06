@@ -1,10 +1,11 @@
 <?php
 
 
-namespace T3ko\Dpd\Objects;
+namespace T3ko\DpdTests\Objects;
 
 
 use PHPUnit\Framework\TestCase;
+use T3ko\Dpd\Objects\Parcel;
 
 class ParcelTest extends TestCase
 {

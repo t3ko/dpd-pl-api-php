@@ -1,6 +1,6 @@
 <?php
 
-namespace T3ko\Dpd\Request\Serializer;
+namespace T3ko\DpdTests\Request\Serializer;
 
 use PHPUnit\Framework\TestCase;
 use T3ko\Dpd\Objects\Package;
@@ -9,6 +9,7 @@ use T3ko\Dpd\Objects\Receiver;
 use T3ko\Dpd\Objects\Sender;
 use PHPUnit\Xpath\Assert as XpathAssertions;
 use PHPUnit\Xpath\Constraint as XpathConstraints;
+use T3ko\Dpd\Request\Serializer\XmlPackagesSerializer;
 
 class XmlPackagesSerializerTest extends TestCase
 {

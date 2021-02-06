@@ -1,7 +1,7 @@
 <?php
 
 
-namespace T3ko\Dpd\Objects;
+namespace T3ko\DpdTests\Objects;
 
 
 use PHPUnit\Framework\TestCase;
@@ -9,6 +9,10 @@ use T3ko\Dpd\Objects\Enum\Currency;
 use T3ko\Dpd\Objects\Enum\GuaranteeType;
 use T3ko\Dpd\Objects\Enum\PayerType;
 use T3ko\Dpd\Objects\Enum\SelfCollectionReceiver;
+use T3ko\Dpd\Objects\Package;
+use T3ko\Dpd\Objects\Parcel;
+use T3ko\Dpd\Objects\Receiver;
+use T3ko\Dpd\Objects\Sender;
 
 class PackageTest extends TestCase
 {

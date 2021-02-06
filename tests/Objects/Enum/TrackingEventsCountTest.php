@@ -1,8 +1,9 @@
 <?php
 
-namespace T3ko\Dpd\Objects\Enum;
+namespace T3ko\DpdTests\Objects\Enum;
 
 use PHPUnit\Framework\TestCase;
+use T3ko\Dpd\Objects\Enum\TrackingEventsCount;
 
 class TrackingEventsCountTest extends TestCase
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace T3ko\Dpd\Request;
+namespace T3ko\DpdTests\Request;
 
 use PHPUnit\Framework\TestCase;
 use T3ko\Dpd\Objects\Enum\Currency;
@@ -11,6 +11,7 @@ use T3ko\Dpd\Objects\Package;
 use T3ko\Dpd\Objects\Parcel;
 use T3ko\Dpd\Objects\Receiver;
 use T3ko\Dpd\Objects\Sender;
+use T3ko\Dpd\Request\GeneratePackageNumbersRequest;
 use T3ko\Dpd\Soap\Types\ServiceCarryInOpenUMLFeV1;
 use T3ko\Dpd\Soap\Types\ServiceCODOpenUMLFeV1;
 use T3ko\Dpd\Soap\Types\ServiceCUDOpenUMLeFV1;

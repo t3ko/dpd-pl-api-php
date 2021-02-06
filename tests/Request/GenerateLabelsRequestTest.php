@@ -1,18 +1,19 @@
 <?php
 
-namespace T3ko\Dpd\Request;
+namespace T3ko\DpdTests\Request;
 
 use PHPUnit\Framework\TestCase;
 use T3ko\Dpd\Objects\Enum\FileType;
 use T3ko\Dpd\Objects\Enum\LabelPrintingPolicy;
 use T3ko\Dpd\Objects\Enum\PageSize;
 use T3ko\Dpd\Objects\Enum\SessionType;
+use T3ko\Dpd\Request\GenerateLabelsRequest;
 
-class GenerateProtocolRequestTest extends TestCase
+class GenerateLabelsRequestTest extends TestCase
 {
     public function testCreationFromParcelIds()
     {
-        $request = GenerateProtocolRequest::fromParcelIds([42, 43, 44]);
+        $request = GenerateLabelsRequest::fromParcelIds([42, 43, 44]);
         $payload = $request->toPayload();
 
         list($package) = $payload->getDpdServicesParams()->getSession()->getPackages();
@@ -41,7 +42,7 @@ class GenerateProtocolRequestTest extends TestCase
 
     public function testCreationFromReferences()
     {
-        $request = GenerateProtocolRequest::fromReferences(['Reference1', 'Reference2', 'Reference3']);
+        $request = GenerateLabelsRequest::fromReferences(['Reference1', 'Reference2', 'Reference3']);
         $payload = $request->toPayload();
 
         list($package) = $payload->getDpdServicesParams()->getSession()->getPackages();
@@ -70,7 +71,7 @@ class GenerateProtocolRequestTest extends TestCase
 
     public function testCreationFromWaybills()
     {
-        $request = GenerateProtocolRequest::fromWaybills(['Waybill1', 'Waybill2', 'Waybill3']);
+        $request = GenerateLabelsRequest::fromWaybills(['Waybill1', 'Waybill2', 'Waybill3']);
         $payload = $request->toPayload();
 
         list($package) = $payload->getDpdServicesParams()->getSession()->getPackages();
@@ -96,5 +97,4 @@ class GenerateProtocolRequestTest extends TestCase
         self::assertNull($payload->getDpdServicesParams()->getSession()->getSessionId());
         self::assertNull($payload->getAuthData());
     }
-
 }

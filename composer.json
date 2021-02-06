@@ -30,5 +30,16 @@
     "psr-4": {
       "T3ko\\Dpd\\": "src/"
     }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "T3ko\\DpdTests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test": [
+      "Composer\\Config::disableProcessTimeout",
+      "phpunit tests"
+    ]
   }
 }

@@ -2,12 +2,13 @@
 
 namespace T3ko\Dpd;
 
-use Phpro\SoapClient\ClientBuilder;
-use Phpro\SoapClient\ClientFactory;
 use Phpro\SoapClient\Soap\ClassMap\ClassMap;
 use Phpro\SoapClient\Soap\ClassMap\ClassMapCollection;
+use Phpro\SoapClient\Soap\Driver\ExtSoap\ExtSoapEngineFactory;
+use Phpro\SoapClient\Soap\Driver\ExtSoap\ExtSoapOptions;
 use Phpro\SoapClient\Soap\Handler\HttPlugHandle;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use T3ko\Dpd\Request\CollectionOrderRequest;
 use T3ko\Dpd\Request\FindPostalCodeRequest;
 use T3ko\Dpd\Request\GenerateLabelsRequest;
@@ -234,21 +235,18 @@ class Api
      */
     private function obtainClient($clientClass)
     {
-        $factory = new ClientFactory($clientClass);
-        $builder = new ClientBuilder(
-            $factory,
-            $this->getWsdl($clientClass),
-            [
-                'cache_wsdl' => WSDL_CACHE_NONE,
-            ]
+        $engine = ExtSoapEngineFactory::fromOptionsWithHandler(
+            ExtSoapOptions::defaults(
+                $this->getWsdl($clientClass),
+                [
+                    'cache_wsdl' => WSDL_CACHE_NONE,
+                ])
+                ->withClassMap($this->getClassMaps()),
+            HttPlugHandle::createWithDefaultClient()
         );
-        $builder->withHandler(HttPlugHandle::createWithDefaultClient());
-        $builder->withClassMaps($this->getClassMaps());
-        if ($this->logger instanceof LoggerInterface) {
-            $builder->withLogger($this->logger);
-        }
+        $eventDispatcher = new EventDispatcher();
 
-        return $builder->build();
+        return new $clientClass($engine, $eventDispatcher);
     }
 
     private function getClassMaps()

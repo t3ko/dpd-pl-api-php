@@ -266,7 +266,7 @@ korzystając z numerów listów przewozowych, identyfikatorów paczek lub refere
 ```php
 use \T3ko\Dpd\Request\GenerateProtocolRequest;
 
-$request = GenerateProtocolRequest::fromWaybils([...]);
+$request = GenerateProtocolRequest::fromWaybills([...]);
 $request = GenerateProtocolRequest::fromParcelIds([...]);
 $request = GenerateProtocolRequest::fromReferences([...]);
 ```

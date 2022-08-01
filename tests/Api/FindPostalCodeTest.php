@@ -10,7 +10,7 @@ class FindPostalCodeTest extends ApiIntegrationTestCase
     /**
      * @dataProvider postalCodeDataProvider
      */
-    public function testFindPostalCodeReponse($code, $expected)
+    public function testFindPostalCodeResponse($code, $expected)
     {
         $result = self::$api->findPostalCode(FindPostalCodeRequest::from($code[0], $code[1]));
         self::assertNotNull($result);
@@ -30,16 +30,12 @@ class FindPostalCodeTest extends ApiIntegrationTestCase
                 'expected' => 'OK'
             ],
             'incorrect PL code' => [
-                'code' => ['99999', 'PL'],
+                'code' => ['99900', 'PL'],
                 'expected' => 'NONEXISTING_POSTAL_CODE'
             ],
             'incorrect DE code' => [
                 'code' => ['99999', 'DE'],
                 'expected' => 'NONEXISTING_POSTAL_CODE'
-            ],
-            'wrong pattern PL code' => [
-                'code' => ['ABCD', 'PL'],
-                'expected' => 'WRONG_POSTAL_PATTERN'
             ],
             'nonexisting country code' => [
                 'code' => ['ABCD', 'XX'],
